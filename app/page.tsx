@@ -11,6 +11,9 @@ import { QuoteToast } from "@/components/chrome/QuoteToast";
 import { AchievementToasts } from "@/components/chrome/AchievementToasts";
 import { RealitySelector } from "@/components/chrome/RealitySelector";
 import { OverloadOverlay } from "@/components/chrome/OverloadOverlay";
+import { VolumeDiary } from "@/components/chrome/VolumeDiary";
+import { SideKit } from "@/components/chrome/SideKit";
+import { CapitalismMode } from "@/components/chrome/CapitalismMode";
 import { GlobalShortcuts } from "@/components/GlobalShortcuts";
 import { useSceneStore } from "@/lib/state/use-scene-store";
 import { getAudioEngine } from "@/lib/audio/audio-engine";
@@ -68,6 +71,9 @@ export default function Page() {
             <AchievementToasts />
             <RealitySelector />
             <OverloadOverlay />
+            <VolumeDiary />
+            <SideKit />
+            <CapitalismMode />
             <GlobalShortcuts />
           </motion.div>
         </>

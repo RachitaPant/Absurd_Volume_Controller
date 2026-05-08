@@ -135,9 +135,9 @@ export default function CursedKnobScene() {
     if (unlock("notarized")) play("achievement", 0.5);
   }, [adjustments, unlock, pushToast]);
 
-  // intercept mute clicks (Phase 1: every mute attempt is comically refused
-  // unless three are clustered, which puts the knob on strike — closest we
-  // get to the boss-battle gate before Phase 4)
+  // mute is earned only by surviving the boss battle. clicking the mute
+  // button now actually spawns the guardian. striking knob still triggers
+  // on three clustered attempts inside ten seconds.
   const handleMute = () => {
     const now = Date.now();
     const m = muteAttempts.current;
@@ -146,11 +146,11 @@ export default function CursedKnobScene() {
     m.lastAt = now;
     if (unlock("first-mute-attempt")) {
       pushToast({
-        text: "the knob will not be silenced. (mute earned only via boss battle, locked in phase 1)",
+        text: "you tried to mute. the GUARDIAN OF SOUND descends.",
         flavor: "warn",
       });
     }
-    play("buzz", 0.4);
+    play("descend", 0.5);
     if (m.count >= 3) {
       setMood({ override: "striking", expiresAt: now + 7000 });
       pushToast({
@@ -158,11 +158,12 @@ export default function CursedKnobScene() {
         flavor: "achievement",
       });
       unlock("the-strike");
-      play("descend", 0.5);
       m.count = 0;
-    } else {
-      setMood({ override: "sulking", expiresAt: now + 1500 });
+      return;
     }
+    setMood({ override: "sulking", expiresAt: now + 1500 });
+    // dispatch to boss battle
+    useSceneStore.getState().setScene("boss-battle");
   };
 
   // chat handler (sentiment + named recognition)

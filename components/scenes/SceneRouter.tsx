@@ -30,6 +30,14 @@ const MedievalLeverScene = dynamic(() => import("./MedievalLeverScene"), {
   ssr: false,
   loading: () => null,
 });
+const BossBattleScene = dynamic(() => import("./BossBattleScene"), {
+  ssr: false,
+  loading: () => null,
+});
+const ScreamCalibratorScene = dynamic(() => import("./ScreamCalibratorScene"), {
+  ssr: false,
+  loading: () => null,
+});
 
 export function SceneRouter() {
   const scene = useSceneStore((s) => s.scene);
@@ -42,6 +50,8 @@ export function SceneRouter() {
       {scene === "black-hole" && <BlackHoleScene key="black-hole" />}
       {scene === "liquid-reactor" && <LiquidReactorScene key="liquid-reactor" />}
       {scene === "medieval-lever" && <MedievalLeverScene key="medieval-lever" />}
+      {scene === "boss-battle" && <BossBattleScene key="boss-battle" />}
+      {scene === "scream-calibrator" && <ScreamCalibratorScene key="scream-calibrator" />}
     </AnimatePresence>
   );
 }

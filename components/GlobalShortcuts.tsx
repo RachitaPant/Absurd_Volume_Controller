@@ -61,16 +61,21 @@ export function GlobalShortcuts() {
     },
   });
 
-  // Ctrl+Shift+L → late-stage capitalism mode (Phase 1 = toast)
+  // Ctrl+Shift+L → toggle late-stage capitalism mode for real
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "l") {
         e.preventDefault();
+        const html = document.documentElement;
+        const next = !html.classList.contains("late-stage-capitalism");
+        html.classList.toggle("late-stage-capitalism", next);
         pushToast({
-          text: "LATE STAGE CAPITALISM MODE pending. cookies you cannot decline imminent.",
-          flavor: "warn",
+          text: next
+            ? "LATE STAGE CAPITALISM MODE engaged. resist the upgrade prompt."
+            : "the cookies have been declined. for now.",
+          flavor: next ? "warn" : "info",
         });
-        play("buzz", 0.4);
+        play(next ? "buzz" : "shimmer", 0.5);
       }
     };
     window.addEventListener("keydown", onKey);

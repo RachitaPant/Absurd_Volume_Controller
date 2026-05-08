@@ -17,8 +17,8 @@ const SCENES: { id: RealityScene; label: string; accent: string; ready: boolean 
   { id: "cosmic-orbit", label: "cosmic orbit", accent: "#7C5CFF", ready: true },
   { id: "medieval-lever", label: "medieval lever", accent: "#D89B4A", ready: true },
   { id: "liquid-reactor", label: "liquid reactor", accent: "#9CFF54", ready: true },
-  { id: "boss-battle", label: "boss battle (mute)", accent: "#F5F2EA", ready: false },
-  { id: "scream-calibrator", label: "scream calibrator", accent: "#F26B3A", ready: false },
+  { id: "boss-battle", label: "boss battle (mute)", accent: "#F5F2EA", ready: true },
+  { id: "scream-calibrator", label: "scream calibrator", accent: "#F26B3A", ready: true },
   { id: "black-hole", label: "the black hole", accent: "#0A0A0A", ready: true },
   { id: "forbidden-button", label: "the forbidden button", accent: "#FF1A1A", ready: true },
 ];
