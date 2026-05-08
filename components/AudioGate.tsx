@@ -23,15 +23,22 @@ export function AudioGate() {
   useEffect(() => {
     if (audioReady) return;
     const enter = async () => {
+      // Race resume() against a 1.5s timer — some headless / synthetic
+      // user-gesture flows leave AudioContext.resume() pending forever, and
+      // we don't want the entire app to stall on it.
+      const settle = (p: Promise<unknown>) =>
+        Promise.race([
+          p,
+          new Promise((r) => setTimeout(r, 1500)),
+        ]);
       try {
         const engine = getAudioEngine();
         engine.init();
-        await engine.resume();
-        setAudioReady(true);
+        await settle(engine.resume());
       } catch {
         // graceful fallback — visuals only
-        setAudioReady(true);
       }
+      setAudioReady(true);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") return;

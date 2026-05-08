@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { MasterKnob } from "@/components/knob/MasterKnob";
-import { KnobFace } from "@/components/knob/KnobFace";
 import { NumberTicker } from "@/components/chrome/NumberTicker";
 import { useVolumeStore } from "@/lib/state/use-volume-store";
 import { useEasterEggStore } from "@/lib/state/use-easter-egg-store";
@@ -59,7 +57,7 @@ type Mood = {
   expiresAt?: number;
 };
 
-export function CursedKnobScene() {
+export default function CursedKnobScene() {
   const introComplete = useSceneStore((s) => s.introComplete);
   const master = useVolumeStore((s) => s.master);
   const isMuted = useVolumeStore((s) => s.isMuted);
@@ -76,7 +74,6 @@ export function CursedKnobScene() {
   const [pinned, setPinned] = useState<string | null>(null);
   const muteAttempts = useRef<{ count: number; lastAt: number }>({ count: 0, lastAt: 0 });
   const lastVolForCheck = useRef(master);
-  const knobSize = useKnobSize();
 
   // Resolve effective emotion: override > derived from volume
   useEffect(() => {
@@ -245,13 +242,9 @@ export function CursedKnobScene() {
         </div>
       </motion.div>
 
-      {/* the knob with face */}
-      <div className="pointer-events-auto" style={{ transform: "translateY(2vh)" }}>
-        <MasterKnob
-          size={knobSize}
-          face={<KnobFace emotion={emotion} size={Math.round(knobSize * 0.4)} />}
-        />
-      </div>
+      {/* the knob is rendered persistently at the page level — see PersistentKnob.
+          this scene only contributes background, narrative, the chat input,
+          and the big number readout below. */}
 
       {/* big number readout below */}
       <motion.div
@@ -342,27 +335,6 @@ export function CursedKnobScene() {
         transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
       />
     </div>
-  );
-}
-
-// Hook variant: always returns the SSR-default first, then updates from
-// viewport. Same value server-side and on first client paint, so React's
-// hydration check is happy.
-function useKnobSize() {
-  return useSyncExternalStore(
-    (cb) => {
-      window.addEventListener("resize", cb);
-      return () => window.removeEventListener("resize", cb);
-    },
-    () =>
-      Math.min(
-        420,
-        Math.max(
-          260,
-          Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.45),
-        ),
-      ),
-    () => 360,
   );
 }
 

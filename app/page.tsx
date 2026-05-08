@@ -4,7 +4,8 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useAudioBridge } from "@/lib/hooks/use-audio-bridge";
 import { AudioGate } from "@/components/AudioGate";
 import { Intro } from "@/components/Intro";
-import { CursedKnobScene } from "@/components/scenes/CursedKnobScene";
+import { SceneRouter } from "@/components/scenes/SceneRouter";
+import { PersistentKnob } from "@/components/knob/PersistentKnob";
 import { HudCorner } from "@/components/chrome/HudCorner";
 import { QuoteToast } from "@/components/chrome/QuoteToast";
 import { AchievementToasts } from "@/components/chrome/AchievementToasts";
@@ -60,7 +61,8 @@ export default function Page() {
             animate={{ opacity: introComplete ? 1 : 0 }}
             transition={{ duration: 1.2, ease: easings.cinematic }}
           >
-            <CursedKnobScene />
+            <SceneRouter />
+            <PersistentKnob />
             <HudCorner />
             <QuoteToast />
             <AchievementToasts />

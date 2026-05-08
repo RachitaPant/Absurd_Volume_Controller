@@ -14,7 +14,7 @@ import { useEasterEggStore } from "@/lib/state/use-easter-egg-store";
 
 const SCENES: { id: RealityScene; label: string; accent: string; ready: boolean }[] = [
   { id: "cursed-knob", label: "the cursed knob", accent: "#FF4D6D", ready: true },
-  { id: "cosmic-orbit", label: "cosmic orbit", accent: "#7C5CFF", ready: false },
+  { id: "cosmic-orbit", label: "cosmic orbit", accent: "#7C5CFF", ready: true },
   { id: "medieval-lever", label: "medieval lever", accent: "#D89B4A", ready: false },
   { id: "liquid-reactor", label: "liquid reactor", accent: "#9CFF54", ready: false },
   { id: "boss-battle", label: "boss battle (mute)", accent: "#F5F2EA", ready: false },
