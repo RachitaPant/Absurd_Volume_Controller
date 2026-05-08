@@ -1,26 +1,239 @@
 @import "tailwindcss";
 
+@theme {
+  --color-void: #08080a;
+  --color-smoke: #15151a;
+  --color-fog: #2a2a32;
+  --color-bone: #f5f2ea;
+  --color-bone-dim: #b8b3a4;
+  --color-accent: #ff4d6d;
+  --color-warning: #ff1a1a;
+
+  --font-display: var(--font-instrument-serif), "Georgia", serif;
+  --font-sans: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "Menlo", monospace;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --accent: #ff4d6d;
+  --accent-glow: oklch(72% 0.18 6);
+  --grain-opacity: 0.03;
+  --vignette-opacity: 0.6;
+  --shake-x: 0px;
+  --shake-y: 0px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--color-void);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  overflow: hidden;
+  cursor: default;
+  /* the universe shakes on overload */
+  transform: translate3d(var(--shake-x), var(--shake-y), 0);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--color-void);
+}
+
+/* tabular numbers everywhere a digit is rendered */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* film grain overlay — animated noise via SVG fragment shader-ish */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: var(--grain-opacity);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 9999;
+  animation: grain 0.6s steps(6) infinite;
+}
+
+@keyframes grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  17% {
+    transform: translate(-3%, 2%);
+  }
+  34% {
+    transform: translate(2%, -3%);
+  }
+  51% {
+    transform: translate(-2%, 3%);
+  }
+  68% {
+    transform: translate(3%, 1%);
+  }
+  85% {
+    transform: translate(-1%, -2%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* vignette overlay */
+.vignette::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 30%,
+    rgba(0, 0, 0, 0.55) 75%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
+  pointer-events: none;
+  opacity: var(--vignette-opacity);
+  z-index: 60;
+}
+
+/* small caps narrative copy */
+.smallcaps {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.18em;
+}
+
+/* outline focus rings */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+@media (forced-colors: active) {
+  body {
+    background: Canvas;
+    color: CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain::after {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 80ms !important;
+  }
+}
+
+/* the chromatic aberration glitch on overload */
+.aberrate {
+  filter: drop-shadow(2px 0 var(--accent)) drop-shadow(-2px 0 #4ce5ff);
+}
+
+/* below zero: world inverted */
+html.subzero body {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* retro 1998: serif and beveled */
+html.retro-1998,
+html.retro-1998 body {
+  font-family: "Times New Roman", "Times", serif !important;
+  background: #007878 !important;
+  color: #000 !important;
+}
+html.retro-1998 ::selection {
+  background: #000080;
+  color: #fff;
+}
+
+/* god mode: a faint accent glow on the page edges */
+html.god-mode body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 80px var(--accent);
+  opacity: 0.35;
+  z-index: 5;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* witching hour: purple haze */
+html.witching-hour body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(124, 92, 255, 0.18), transparent 60%);
+  z-index: 4;
+}
+
+/* monospace HUD font baseline */
+.hud {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-bone-dim);
+}
+
+/* the "tick" marks on the knob bezel */
+.knob-tick {
+  position: absolute;
+  width: 1px;
+  background: var(--color-bone-dim);
+}
+
+/* the breathing hairline */
+@keyframes breathe-hairline {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scaleY(2.5);
+    opacity: 1;
+  }
+}
+
+.breathe-hairline {
+  animation: breathe-hairline 1.6s ease-in-out infinite;
+}
+
+/* particles drifting in */
+@keyframes drift-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from-x)) translateY(var(--from-y));
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
 }
