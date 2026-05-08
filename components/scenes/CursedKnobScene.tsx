@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { SceneShell } from "./SceneShell";
 import { NumberTicker } from "@/components/chrome/NumberTicker";
 import { useVolumeStore } from "@/lib/state/use-volume-store";
 import { useEasterEggStore } from "@/lib/state/use-easter-egg-store";
@@ -219,7 +220,7 @@ export default function CursedKnobScene() {
   const palette = emotionPalette[emotion];
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+    <SceneShell>
       {/* atmospheric back-glow tied to the emotion */}
       <motion.div
         className="absolute inset-0 -z-10"
@@ -334,7 +335,7 @@ export default function CursedKnobScene() {
         animate={{ rotate: 360 }}
         transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
       />
-    </div>
+    </SceneShell>
   );
 }
 

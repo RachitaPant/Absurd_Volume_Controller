@@ -11,6 +11,7 @@ import {
 } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import { Vector2 } from "three";
+import { SceneShell } from "../SceneShell";
 import { Sun } from "./Sun";
 import { Planet } from "./Planet";
 import { Stars } from "./Stars";
@@ -67,13 +68,7 @@ export default function CosmicOrbitScene() {
   };
 
   return (
-    <motion.div
-      className="absolute inset-0"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 1.2, ease: easings.cinematic }}
-    >
+    <SceneShell>
       {/* WebGL plate behind the knob */}
       <Canvas
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
@@ -150,7 +145,7 @@ export default function CosmicOrbitScene() {
           <BandReadout key={p.band} index={p.band} label={p.label} color={p.color} />
         ))}
       </motion.div>
-    </motion.div>
+    </SceneShell>
   );
 }
 
