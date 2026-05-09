@@ -8,8 +8,8 @@ import { getAudioEngine } from "@/lib/audio/audio-engine";
 import { play } from "@/lib/audio/presets";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
 
-const TITLE = "YOU HAVE FOUND THE LOUDEST PLACE ON THE INTERNET.";
-const SUBTITLE = "VOLUMETRIC HUBRIS // v4.7.0 // CALIBRATING REALITY...";
+const TITLE = "WELCOME TO BHAI BHAI ENTERPRISES PVT. LTD.";
+const SUBTITLE = "SOLAR SYSTEM OPERATIONS // FY 2024-25 // REPORTING TO WORK...";
 
 export function Intro() {
   const setIntroComplete = useSceneStore((s) => s.setIntroComplete);
@@ -62,10 +62,10 @@ export function Intro() {
       setPhase("whisper");
       try {
         if ("speechSynthesis" in window) {
-          const u = new SpeechSynthesisUtterance("Please. Be careful with the knob.");
-          u.rate = 0.7;
-          u.pitch = 0.4;
-          u.volume = 0.55;
+          const u = new SpeechSynthesisUtterance("Sharma sir is watching. Always.");
+          u.rate = 0.65;
+          u.pitch = 0.35;
+          u.volume = 0.5;
           window.speechSynthesis.speak(u);
         }
       } catch {}
@@ -233,24 +233,28 @@ export function Intro() {
             </div>
           )}
 
-          {/* fake knob silhouette during the dolly reveal */}
+          {/* mic button silhouette during the dolly reveal */}
           {(phase === "knob" || phase === "system" || phase === "whisper") && (
             <motion.div
               aria-hidden
-              className="absolute left-1/2 bottom-[14%] -translate-x-1/2"
+              className="absolute left-1/2 bottom-[14%] -translate-x-1/2 flex flex-col items-center gap-3"
               initial={{ scale: 0.2, opacity: 0, y: 100 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               transition={{ duration: 1.2, ease: easings.cinematic }}
             >
               <div
-                className="w-44 h-44 rounded-full"
+                className="w-24 h-24 rounded-full flex items-center justify-center text-4xl"
                 style={{
-                  background:
-                    "radial-gradient(circle at 30% 25%, #2c2c34, #08080a 70%, #000)",
-                  boxShadow:
-                    "0 40px 100px -20px rgba(255,77,109,0.25), inset 0 -10px 20px rgba(0,0,0,0.6)",
+                  background: "radial-gradient(circle at 30% 25%, #2c2c34, #08080a 70%, #000)",
+                  boxShadow: "0 0 60px rgba(124,92,255,0.3), inset 0 -6px 16px rgba(0,0,0,0.6)",
+                  border: "2px solid rgba(245,242,234,0.12)",
                 }}
-              />
+              >
+                🎙️
+              </div>
+              <div className="hud text-bone/30 text-[9px] tracking-[0.25em]">
+                BOL BHAI BOL
+              </div>
             </motion.div>
           )}
 
@@ -273,7 +277,7 @@ export function Intro() {
               transition={{ duration: 0.8 }}
             >
               <p className="font-display italic text-bone/70 text-2xl leading-snug">
-                &ldquo;please. be careful with the knob.&rdquo;
+                &ldquo;sharma sir is watching. always.&rdquo;
               </p>
             </motion.div>
           )}

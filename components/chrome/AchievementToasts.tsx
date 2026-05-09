@@ -3,7 +3,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect } from "react";
 import { useEasterEggStore } from "@/lib/state/use-easter-egg-store";
-import { useSceneStore } from "@/lib/state/use-scene-store";
 import { easings } from "@/lib/utils/easings";
 
 const MAX_TOASTS = 4;
@@ -14,7 +13,6 @@ const TOAST_TTL_MS = 4500;
 export function AchievementToasts() {
   const toasts = useEasterEggStore((s) => s.toasts);
   const dismiss = useEasterEggStore((s) => s.dismissToast);
-  const scene = useSceneStore((s) => s.scene);
 
   // Periodically expire all stale toasts (not just the oldest one).
   useEffect(() => {
@@ -33,12 +31,6 @@ export function AchievementToasts() {
     return () => window.clearInterval(id);
   }, [toasts, dismiss]);
 
-  // On scene change, drop every existing toast so the new scene starts clean.
-  useEffect(() => {
-    const ids = useEasterEggStore.getState().toasts.map((t) => t.id);
-    ids.forEach((id) => dismiss(id));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene]);
 
   return (
     <div

@@ -16,7 +16,13 @@ export type PresetName =
   | "yawn"
   | "supernova"
   | "glass-shatter"
-  | "achievement";
+  | "achievement"
+  | "tabla"
+  | "dholak"
+  | "shehnai"
+  | "whatsapp-thunk"
+  | "printer-brrr"
+  | "dholak-loop";
 
 export function play(preset: PresetName, gain = 1) {
   const engine = getAudioEngine();
@@ -70,6 +76,24 @@ export function play(preset: PresetName, gain = 1) {
       break;
     case "achievement":
       arpeggio(ctx, out, now, [523.25, 659.25, 783.99, 1046.5], 0.06);
+      break;
+    case "tabla":
+      tabla(ctx, out, now);
+      break;
+    case "dholak":
+      dholak(ctx, out, now);
+      break;
+    case "shehnai":
+      shehnai(ctx, out, now);
+      break;
+    case "whatsapp-thunk":
+      whatsappThunk(ctx, out, now);
+      break;
+    case "printer-brrr":
+      printerBrrr(ctx, out, now);
+      break;
+    case "dholak-loop":
+      dholakLoop(ctx, out, now);
       break;
   }
 }
@@ -242,6 +266,140 @@ function glass(ctx: AudioContext, out: GainNode, t: number) {
   noise.start(t);
   [3200, 4400, 5300, 6800].forEach((f, i) => ping(ctx, out, t + 0.04 * i, f));
 }
+
+// ─── Indian office SFX ────────────────────────────────────────────────────────
+
+// Tabla: sharp resonant hit around 160 Hz — bayan + dayan mixed
+function tabla(ctx: AudioContext, out: GainNode, t: number) {
+  // dayan (high drum) — sine pitch drop
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(310, t);
+  o.frequency.exponentialRampToValueAtTime(160, t + 0.06);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.7, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+  o.connect(g).connect(out);
+  o.start(t); o.stop(t + 0.2);
+  // bayan (bass drum) — low thud
+  const o2 = ctx.createOscillator();
+  const g2 = ctx.createGain();
+  o2.type = "sine";
+  o2.frequency.setValueAtTime(90, t);
+  o2.frequency.exponentialRampToValueAtTime(50, t + 0.12);
+  g2.gain.setValueAtTime(0.0001, t);
+  g2.gain.exponentialRampToValueAtTime(0.45, t + 0.01);
+  g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+  o2.connect(g2).connect(out);
+  o2.start(t); o2.stop(t + 0.18);
+}
+
+// Dholak: deeper double-headed drum, more resonant
+function dholak(ctx: AudioContext, out: GainNode, t: number) {
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(150, t);
+  o.frequency.exponentialRampToValueAtTime(60, t + 0.22);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.65, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+  o.connect(g).connect(out);
+  o.start(t); o.stop(t + 0.32);
+  // noise smack
+  const noise = whiteNoise(ctx, 0.08);
+  const hp = ctx.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 800;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.35, t);
+  ng.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  noise.connect(hp).connect(ng).connect(out);
+  noise.start(t);
+}
+
+// Shehnai: nasal reed instrument — sawtooth with vibrato and bandpass
+function shehnai(ctx: AudioContext, out: GainNode, t: number) {
+  const o = ctx.createOscillator();
+  const lfo = ctx.createOscillator();
+  const lfoG = ctx.createGain();
+  const bp = ctx.createBiquadFilter();
+  const g = ctx.createGain();
+  o.type = "sawtooth";
+  o.frequency.value = 523.25; // C5
+  lfo.type = "sine";
+  lfo.frequency.value = 5.8;
+  lfoG.gain.value = 8;
+  bp.type = "bandpass";
+  bp.frequency.value = 1400;
+  bp.Q.value = 4;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.28, t + 0.14);
+  g.gain.linearRampToValueAtTime(0.22, t + 0.7);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+  lfo.connect(lfoG).connect(o.frequency);
+  o.connect(bp).connect(g).connect(out);
+  lfo.start(t); o.start(t);
+  lfo.stop(t + 1.2); o.stop(t + 1.2);
+}
+
+// WhatsApp notification: two-tone ascending ping (iconic green sound)
+function whatsappThunk(ctx: AudioContext, out: GainNode, t: number) {
+  ping(ctx, out, t, 880);
+  ping(ctx, out, t + 0.11, 1174.66);
+}
+
+// Thermal printer: AM-modulated noise burst
+function printerBrrr(ctx: AudioContext, out: GainNode, t: number) {
+  const noise = whiteNoise(ctx, 1.6);
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 2400;
+  bp.Q.value = 0.8;
+  // amplitude modulation via LFO simulating print head back-and-forth
+  const lfo = ctx.createOscillator();
+  const lfoG = ctx.createGain();
+  const g = ctx.createGain();
+  lfo.type = "square";
+  lfo.frequency.value = 22;
+  lfoG.gain.value = 0.22;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.3, t + 0.1);
+  g.gain.setValueAtTime(0.3, t + 1.3);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 1.55);
+  lfo.connect(lfoG).connect(g.gain);
+  noise.connect(bp).connect(g).connect(out);
+  lfo.start(t); noise.start(t);
+  lfo.stop(t + 1.6);
+}
+
+// Dholak rhythm loop: ~8s of dhol-tasa pattern for pawri mode
+function dholakLoop(ctx: AudioContext, out: GainNode, t: number) {
+  // pattern: KICK-snare-kick-KICK-snare (folk dholak rhythm)
+  const beats = [
+    { dt: 0,    fn: dholak, v: 1.0 },
+    { dt: 0.2,  fn: tabla,  v: 0.6 },
+    { dt: 0.4,  fn: dholak, v: 0.8 },
+    { dt: 0.6,  fn: dholak, v: 1.0 },
+    { dt: 0.8,  fn: tabla,  v: 0.6 },
+    { dt: 1.0,  fn: dholak, v: 0.7 },
+    { dt: 1.1,  fn: tabla,  v: 0.4 },
+    { dt: 1.2,  fn: dholak, v: 0.9 },
+  ];
+  const loopDuration = 1.4;
+  const totalLoops = Math.floor(8 / loopDuration);
+  for (let i = 0; i < totalLoops; i++) {
+    for (const beat of beats) {
+      const beatOut = ctx.createGain();
+      beatOut.gain.value = beat.v * 0.55;
+      beatOut.connect(out);
+      beat.fn(ctx, beatOut, t + i * loopDuration + beat.dt);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function whiteNoise(ctx: AudioContext, seconds: number): AudioBufferSourceNode {
   const rate = ctx.sampleRate;

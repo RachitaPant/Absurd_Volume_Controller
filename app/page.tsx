@@ -1,24 +1,47 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useAudioBridge } from "@/lib/hooks/use-audio-bridge";
 import { AudioGate } from "@/components/AudioGate";
 import { Intro } from "@/components/Intro";
+import { BhaiBhaiDashboard } from "@/components/dashboard/BhaiBhaiDashboard";
+import { HudCorner } from "@/components/chrome/HudCorner";
+import { AchievementToasts } from "@/components/chrome/AchievementToasts";
+import { OverloadOverlay } from "@/components/chrome/OverloadOverlay";
+import { GlobalShortcuts } from "@/components/GlobalShortcuts";
 import { useSceneStore } from "@/lib/state/use-scene-store";
+import { useEasterEggStore } from "@/lib/state/use-easter-egg-store";
+import { getAudioEngine, PROFILES } from "@/lib/audio/audio-engine";
 import { motion } from "motion/react";
 import { easings } from "@/lib/utils/easings";
 
-// Bhai Bhai Enterprises — full dashboard loads here once built
 export default function Page() {
   useAudioBridge();
   const audioReady = useSceneStore((s) => s.audioReady);
   const introComplete = useSceneStore((s) => s.introComplete);
+  const unlock = useEasterEggStore((s) => s.unlock);
+  const pushToast = useEasterEggStore((s) => s.pushToast);
 
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false,
   );
+
+  // Start the procedural pad on the cosmicOrbit profile once intro completes
+  useEffect(() => {
+    if (!introComplete || !audioReady) return;
+    const e = getAudioEngine();
+    if (e.isReady()) {
+      e.startPad(PROFILES.cosmicOrbit);
+    }
+    if (unlock("first-touch")) {
+      pushToast({
+        text: "Bhai Bhai Enterprises welcomes you. Sharma Sir has noted your arrival.",
+        flavor: "diary",
+      });
+    }
+  }, [introComplete, audioReady, unlock, pushToast]);
 
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-void">
@@ -32,10 +55,11 @@ export default function Page() {
             animate={{ opacity: introComplete ? 1 : 0 }}
             transition={{ duration: 1.2, ease: easings.cinematic }}
           >
-            {/* BhaiBhaiDashboard mounts here — coming in next commit */}
-            <div className="flex items-center justify-center h-full hud text-bone/40">
-              BHAI BHAI ENTERPRISES PVT. LTD. — LOADING...
-            </div>
+            <BhaiBhaiDashboard />
+            <HudCorner />
+            <AchievementToasts />
+            <OverloadOverlay />
+            <GlobalShortcuts />
           </motion.div>
         </>
       )}
