@@ -14,6 +14,7 @@ import { OverloadOverlay } from "@/components/chrome/OverloadOverlay";
 import { VolumeDiary } from "@/components/chrome/VolumeDiary";
 import { SideKit } from "@/components/chrome/SideKit";
 import { CapitalismMode } from "@/components/chrome/CapitalismMode";
+import { Television } from "@/components/chrome/Television";
 import { GlobalShortcuts } from "@/components/GlobalShortcuts";
 import { useSceneStore } from "@/lib/state/use-scene-store";
 import { getAudioEngine } from "@/lib/audio/audio-engine";
@@ -73,6 +74,7 @@ export default function Page() {
             <OverloadOverlay />
             <VolumeDiary />
             <SideKit />
+            <Television />
             <CapitalismMode />
             <GlobalShortcuts />
           </motion.div>

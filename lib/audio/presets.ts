@@ -25,7 +25,9 @@ export function play(preset: PresetName, gain = 1) {
   const now = ctx.currentTime;
   const out = ctx.createGain();
   out.gain.value = gain * 0.6;
-  out.connect(ctx.destination);
+  // Route through the engine's analyser so the on-screen TV picks up
+  // every SFX, not just the procedural pad.
+  out.connect(engine.output());
   switch (preset) {
     case "knob-tick":
       tick(ctx, out, now);

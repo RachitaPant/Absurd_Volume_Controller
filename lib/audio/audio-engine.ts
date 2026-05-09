@@ -5,8 +5,8 @@
 
 export type AnalyserHandle = {
   analyser: AnalyserNode;
-  frequencyData: Uint8Array;
-  timeData: Uint8Array;
+  frequencyData: Uint8Array<ArrayBuffer>;
+  timeData: Uint8Array<ArrayBuffer>;
 };
 
 const BAND_FREQS = [80, 250, 800, 2500, 8000] as const;
@@ -147,11 +147,20 @@ class AudioEngineImpl {
 
   getAnalyser(): AnalyserHandle | null {
     if (!this.analyser) return null;
+    const fft = this.analyser.fftSize;
     return {
       analyser: this.analyser,
-      frequencyData: new Uint8Array(this.analyser.frequencyBinCount),
-      timeData: new Uint8Array(this.analyser.frequencyBinCount),
+      frequencyData: new Uint8Array(new ArrayBuffer(this.analyser.frequencyBinCount)),
+      timeData: new Uint8Array(new ArrayBuffer(fft)),
     };
+  }
+
+  // The "tap point" for SFX. Routing one-shots through here means everything
+  // — pad, knob ticks, achievements, glass shatters — flows through the
+  // visualization analyser before destination. Falls back to ctx.destination
+  // if the engine isn't ready yet (e.g. preview-time eager calls).
+  output(): AudioNode {
+    return this.analyser ?? this.ctx!.destination;
   }
 
   // Procedural ambient pad. Three detuned oscillators in a minor 9th-ish
