@@ -53,19 +53,20 @@ export default function BossBattleScene() {
       queueMicrotask(() => setPhase("p3"));
       play("supernova", 0.7);
       pushToast({
-        text: "PHASE 3 — explode the form. click every fragment in 8 seconds.",
+        text: "PHASE 3 — explode the form. click every fragment in 12 seconds.",
         flavor: "warn",
       });
-      // spawn 100 mini-knobs scattered across the viewport
-      const knobs = Array.from({ length: 100 }).map((_, i) => ({
+      // 30 mini-knobs (down from 100) and a 12s window. The original spec
+      // promised 100/8s; we cut the difficulty so a real human can win.
+      const knobs = Array.from({ length: 30 }).map((_, i) => ({
         id: i,
-        x: 8 + Math.random() * 84,
-        y: 18 + Math.random() * 62,
+        x: 10 + Math.random() * 80,
+        y: 22 + Math.random() * 56,
         clicked: false,
       }));
       queueMicrotask(() => {
         setMiniKnobs(knobs);
-        setPhase3T(8);
+        setPhase3T(12);
       });
     }
   }, [hp, phase, pushToast]);
@@ -76,8 +77,8 @@ export default function BossBattleScene() {
     const t0 = performance.now();
     const id = window.setInterval(() => {
       const elapsed = (performance.now() - t0) / 1000;
-      setPhase3T(Math.max(0, 8 - elapsed));
-      if (elapsed >= 8) {
+      setPhase3T(Math.max(0, 12 - elapsed));
+      if (elapsed >= 12) {
         window.clearInterval(id);
         // Failed — boss reforms at 33% HP (reset to p2)
         play("buzz", 0.6);
@@ -276,14 +277,15 @@ export default function BossBattleScene() {
                   style={{
                     left: `${k.x}%`,
                     top: `${k.y}%`,
-                    width: 18,
-                    height: 18,
+                    width: 36,
+                    height: 36,
                     background: k.clicked
                       ? "transparent"
                       : "radial-gradient(circle at 30% 30%, #ffffff, #ff4d6d 70%, #08080a)",
-                    border: k.clicked ? "1px dashed rgba(245,242,234,0.18)" : "1px solid rgba(245,242,234,0.4)",
+                    border: k.clicked ? "1px dashed rgba(245,242,234,0.18)" : "1px solid rgba(245,242,234,0.5)",
+                    boxShadow: k.clicked ? "none" : "0 0 14px rgba(255,77,109,0.55)",
                     pointerEvents: k.clicked ? "none" : "auto",
-                    opacity: k.clicked ? 0.2 : 1,
+                    opacity: k.clicked ? 0.18 : 1,
                     cursor: "crosshair",
                   }}
                 />

@@ -3,21 +3,42 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect } from "react";
 import { useEasterEggStore } from "@/lib/state/use-easter-egg-store";
+import { useSceneStore } from "@/lib/state/use-scene-store";
 import { easings } from "@/lib/utils/easings";
 
-// Right-edge toasts. Single source of truth: useEasterEggStore.toasts
+const MAX_TOASTS = 4;
+const TOAST_TTL_MS = 4500;
+
+// Right-edge toasts. Single source of truth: useEasterEggStore.toasts.
+// Aggressive expiry so they don't pile up across scene switches.
 export function AchievementToasts() {
   const toasts = useEasterEggStore((s) => s.toasts);
   const dismiss = useEasterEggStore((s) => s.dismissToast);
+  const scene = useSceneStore((s) => s.scene);
 
+  // Periodically expire all stale toasts (not just the oldest one).
   useEffect(() => {
     if (!toasts.length) return;
-    const id = window.setTimeout(() => {
-      const oldest = toasts[0];
-      if (oldest && Date.now() - oldest.ts > 4500) dismiss(oldest.id);
-    }, 600);
-    return () => window.clearTimeout(id);
+    const id = window.setInterval(() => {
+      const now = Date.now();
+      for (const t of toasts) {
+        if (now - t.ts > TOAST_TTL_MS) dismiss(t.id);
+      }
+      // also cap total toasts: drop oldest once over MAX
+      if (toasts.length > MAX_TOASTS) {
+        const overflow = toasts.length - MAX_TOASTS;
+        for (let i = 0; i < overflow; i++) dismiss(toasts[i].id);
+      }
+    }, 350);
+    return () => window.clearInterval(id);
   }, [toasts, dismiss]);
+
+  // On scene change, drop every existing toast so the new scene starts clean.
+  useEffect(() => {
+    const ids = useEasterEggStore.getState().toasts.map((t) => t.id);
+    ids.forEach((id) => dismiss(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene]);
 
   return (
     <div

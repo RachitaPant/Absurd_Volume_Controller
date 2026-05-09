@@ -178,21 +178,19 @@ export default function MedievalLeverScene() {
         </div>
       </motion.div>
 
-      {/* the lever */}
+      {/* the lever — pivot stays put. shaft+handle is a separate node so it
+          can detach and tumble to the floor on snap. */}
       <div
         ref={leverRef}
         className="absolute left-[14%] bottom-[20%] pointer-events-auto cursor-grab active:cursor-grabbing"
         style={{
           width: 280,
           height: 60,
-          transform: `rotate(${-angle}deg)`,
           transformOrigin: "30px 30px",
           touchAction: "none",
-          transition: broken ? "transform 0.4s" : "transform 80ms linear",
-          opacity: broken ? 0.6 : 1,
         }}
       >
-        {/* base pivot */}
+        {/* base pivot — never moves */}
         <div
           className="absolute"
           style={{
@@ -206,41 +204,104 @@ export default function MedievalLeverScene() {
             boxShadow: "inset 0 -4px 8px rgba(0,0,0,0.7), 0 0 30px rgba(0,0,0,0.6)",
           }}
         />
-        {/* shaft */}
-        <div
+
+        {/* the broken-off piece (shaft + handle). animates a tumble + fall
+            when broken=true; otherwise rotates with the angle. */}
+        <motion.div
           className="absolute"
           style={{
-            left: 22,
-            top: 22,
-            width: 250,
-            height: 16,
-            background:
-              "linear-gradient(180deg, #4a4540 0%, #2c2620 50%, #4a4540 100%)",
-            borderRadius: 2,
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 8px rgba(0,0,0,0.6)",
+            left: 0,
+            top: 0,
+            width: 280,
+            height: 60,
+            transformOrigin: "30px 30px",
           }}
-        />
-        {/* handle ball */}
-        <div
-          className="absolute rounded-full"
-          style={{
-            right: -10,
-            top: 8,
-            width: 44,
-            height: 44,
-            background: "radial-gradient(circle at 30% 30%, #6c6660, #2c2620)",
-            boxShadow: "0 0 24px rgba(216,155,74,0.3), inset 0 -4px 8px rgba(0,0,0,0.5)",
-            border: "1px solid #5c5650",
-          }}
-        />
-        {broken && (
+          animate={
+            broken
+              ? {
+                  rotate: -120,
+                  x: 60,
+                  y: 220,
+                  opacity: 0.85,
+                }
+              : { rotate: -angle, x: 0, y: 0, opacity: 1 }
+          }
+          transition={
+            broken
+              ? { duration: 1.4, ease: easings.doom }
+              : { duration: 0.08, ease: "linear" }
+          }
+        >
           <div
-            className="absolute inset-0 pointer-events-none flex items-center justify-center"
-            style={{ left: 60 }}
-          >
-            <div className="hud text-[var(--accent)] tracking-[0.3em]">CRACK</div>
-          </div>
-        )}
+            className="absolute"
+            style={{
+              left: 22,
+              top: 22,
+              width: 250,
+              height: 16,
+              background:
+                "linear-gradient(180deg, #4a4540 0%, #2c2620 50%, #4a4540 100%)",
+              borderRadius: 2,
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 8px rgba(0,0,0,0.6)",
+            }}
+          />
+          <div
+            className="absolute rounded-full"
+            style={{
+              right: -10,
+              top: 8,
+              width: 44,
+              height: 44,
+              background:
+                "radial-gradient(circle at 30% 30%, #6c6660, #2c2620)",
+              boxShadow:
+                "0 0 24px rgba(216,155,74,0.3), inset 0 -4px 8px rgba(0,0,0,0.5)",
+              border: "1px solid #5c5650",
+            }}
+          />
+          {/* jagged break edge at the pivot side, only visible when broken */}
+          {broken && (
+            <div
+              className="absolute"
+              style={{
+                left: 22,
+                top: 18,
+                width: 8,
+                height: 24,
+                background:
+                  "polygon(0 0, 100% 4px, 50% 12px, 100% 18px, 0 24px)",
+                clipPath:
+                  "polygon(0 0, 100% 4px, 30% 10px, 100% 14px, 0 22px, 60% 12px)",
+                backgroundColor: "#1a1612",
+              }}
+            />
+          )}
+        </motion.div>
+
+        {/* dust puff on the impact site */}
+        <AnimatePresence>
+          {broken && (
+            <motion.div
+              key="dust"
+              className="absolute pointer-events-none"
+              style={{
+                left: 80,
+                top: 240,
+                width: 90,
+                height: 30,
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(ellipse, rgba(216,155,74,0.55), transparent 70%)",
+                filter: "blur(4px)",
+              }}
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: [0, 0.8, 0], scale: [0.4, 1.4, 1.8] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.6, ease: "easeOut", delay: 1.3 }}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
       {/* effort meter */}

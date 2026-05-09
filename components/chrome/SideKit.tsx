@@ -43,7 +43,7 @@ export function SideKit() {
 
   return (
     <>
-      <div className="fixed left-0 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2 items-start">
+      <div className="fixed left-0 top-[22%] z-30 flex flex-col gap-2 items-start">
         <button
           className="px-3 py-2 rounded-r-md hud bg-smoke/60 backdrop-blur border border-l-0 border-bone/15 text-bone/55 hover:text-bone"
           onClick={() => {

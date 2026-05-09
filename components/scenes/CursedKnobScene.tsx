@@ -53,6 +53,25 @@ const INSULTS = [
   "pathetic",
 ];
 
+// Gestures the knob recognises beyond pure sentiment. Keys are a list of
+// substring triggers; the value is a handler that returns the pinned message.
+const VIOLENCE = ["kick", "punch", "slap", "hit", "shove", "shake"];
+const CARE = ["feed", "food", "snack", "meal", "treat", "water", "tea"];
+const GREETING = ["hi", "hello", "hey", "yo", "sup", "greetings"];
+const QUESTION_HOW = ["how are you", "how r u", "how do you", "u ok", "you ok"];
+const QUESTION_NAME = ["your name", "what are you", "who are you"];
+
+const KNOB_FILLER_REPLIES = [
+  "the knob considers your input.",
+  "the knob raises one of its imagined eyebrows.",
+  "the knob takes a moment.",
+  "the knob makes a note.",
+  "the knob clears its imagined throat.",
+  "the knob looks past you, briefly.",
+  "the knob writes this down. for legal reasons.",
+  "the knob is filing this thought under 'human matters'.",
+];
+
 type Mood = {
   override?: KnobEmotion;
   expiresAt?: number;
@@ -166,40 +185,92 @@ export default function CursedKnobScene() {
     useSceneStore.getState().setScene("boss-battle");
   };
 
-  // chat handler (sentiment + named recognition)
+  // chat handler — sentiment + recognised gestures. priority order:
+  // greetings → questions → violence → care → name → compliment → insult →
+  // generic filler.
   const submitChat = (raw: string) => {
     const text = raw.trim().toLowerCase();
     if (!text) return;
-    const isCompliment = COMPLIMENTS.some((w) => text.includes(w));
-    const isInsult = INSULTS.some((w) => text.includes(w));
-    const knowsName = /\bknob\b/.test(text);
-
-    if (knowsName) {
-      if (unlock("the-knob-knows-your-name")) {
-        pushToast({
-          text: "the knob knows you said its name. it does not appreciate the formality.",
-          flavor: "achievement",
-        });
-      }
-    }
-
-    if (isCompliment) {
-      setMood({ override: "preening", expiresAt: Date.now() + 4000 });
-      setPinned("the knob preens.");
-      play("shimmer", 0.5);
-    } else if (isInsult) {
-      setMood({ override: "sulking", expiresAt: Date.now() + 5000 });
-      setPinned("the knob sulks. input ignored for five seconds.");
-      play("descend", 0.4);
-    } else if (text.endsWith("?")) {
-      setPinned("the knob declines to comment.");
-      play("ping", 0.4);
-    } else {
-      setPinned(`the knob considers: "${raw.slice(0, 40)}"`);
-      play("knob-tick", 0.4);
-    }
     setChat("");
-    window.setTimeout(() => setPinned(null), 3500);
+
+    const knowsName = /\bknob\b/.test(text);
+    if (knowsName && unlock("the-knob-knows-your-name")) {
+      pushToast({
+        text: "the knob knows you said its name. it does not appreciate the formality.",
+        flavor: "achievement",
+      });
+    }
+
+    let pinnedText = "";
+    let moodOverride: KnobEmotion | null = null;
+    let moodMs = 4000;
+    let sfx: Parameters<typeof play>[0] = "knob-tick";
+    let sfxVol = 0.4;
+
+    if (GREETING.some((g) => new RegExp(`(^|\\s)${g}\\b`).test(text))) {
+      const replies = [
+        "the knob says nothing. eye contact is enough.",
+        "the knob nods, somehow.",
+        "the knob clocks you. carry on.",
+        "the knob: 'yes. i see you.'",
+      ];
+      pinnedText = replies[Math.floor(Math.random() * replies.length)];
+      sfx = "ping";
+      sfxVol = 0.35;
+    } else if (QUESTION_HOW.some((q) => text.includes(q))) {
+      pinnedText =
+        "the knob is, in a word that does not exist in your language, fine.";
+      sfx = "ping";
+    } else if (QUESTION_NAME.some((q) => text.includes(q))) {
+      pinnedText = "the knob has no name. the knob predates names.";
+      sfx = "shimmer";
+    } else if (VIOLENCE.some((v) => text.includes(v))) {
+      pinnedText = "the knob shrieks. that hurt and you know it.";
+      moodOverride = "manic";
+      moodMs = 4500;
+      sfx = "glass-shatter";
+      sfxVol = 0.6;
+      shriekSweep();
+      if (typeof navigator !== "undefined" && navigator.vibrate)
+        navigator.vibrate([40, 20, 80]);
+    } else if (CARE.some((c) => text.includes(c))) {
+      pinnedText = "the knob accepts the offering. the music slows.";
+      moodOverride = "content";
+      moodMs = 6000;
+      sfx = "yawn";
+      sfxVol = 0.5;
+      slowSweep();
+    } else if (
+      COMPLIMENTS.some((w) => new RegExp(`\\b${w}\\b`).test(text))
+    ) {
+      pinnedText = pickOne([
+        "the knob preens.",
+        "the knob savors this.",
+        "the knob blushes, somehow.",
+      ]);
+      moodOverride = "preening";
+      sfx = "shimmer";
+      sfxVol = 0.5;
+    } else if (INSULTS.some((w) => new RegExp(`\\b${w}\\b`).test(text))) {
+      pinnedText = "the knob sulks. input ignored for five seconds.";
+      moodOverride = "sulking";
+      moodMs = 5000;
+      sfx = "descend";
+    } else if (text.endsWith("?")) {
+      pinnedText = "the knob declines to comment.";
+      sfx = "ping";
+    } else if (text.length < 4) {
+      pinnedText = `"${raw.slice(0, 40)}"... the knob waits for the rest.`;
+    } else {
+      pinnedText = `${pickOne(KNOB_FILLER_REPLIES)} ("${raw.slice(0, 40)}")`;
+    }
+
+    if (moodOverride) {
+      setMood({ override: moodOverride, expiresAt: Date.now() + moodMs });
+    }
+    play(sfx, sfxVol);
+    setPinned(pinnedText);
+    window.setTimeout(() => setPinned(null), 3800);
   };
 
   // idle: knob falls asleep
@@ -344,4 +415,48 @@ function narrativeFor(v: number) {
   const r = Math.round(v);
   const time = new Date().toLocaleTimeString();
   return `at ${time}, the user — for reasons known only to them — set the volume to ${r}%. the knob, ever loyal, complied.`;
+}
+
+function pickOne<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Quick downward sweep for "kick"-like inputs — implemented inline to avoid
+// adding another Preset entry. Fires through the engine output bus so the
+// television sees it.
+function shriekSweep() {
+  // dynamic import dodges a circular module dep at build time
+  import("@/lib/audio/audio-engine").then(({ getAudioEngine }) => {
+    const ctx = getAudioEngine().context();
+    if (!ctx) return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(2200, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.7);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.32, ctx.currentTime + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
+    o.connect(g).connect(getAudioEngine().output());
+    o.start();
+    o.stop(ctx.currentTime + 0.85);
+  });
+}
+
+function slowSweep() {
+  import("@/lib/audio/audio-engine").then(({ getAudioEngine }) => {
+    const ctx = getAudioEngine().context();
+    if (!ctx) return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(330, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 1.2);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.4);
+    o.connect(g).connect(getAudioEngine().output());
+    o.start();
+    o.stop(ctx.currentTime + 1.5);
+  });
 }

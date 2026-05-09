@@ -163,27 +163,54 @@ class AudioEngineImpl {
     return this.analyser ?? this.ctx!.destination;
   }
 
-  // Procedural ambient pad. Three detuned oscillators in a minor 9th-ish
-  // voicing, slow LFO on filter cutoff. No samples touched.
-  startPad() {
+  // Per-scene "channel" — different fundamentals + filter cutoff per mood.
+  // The pad oscillators are smoothly retuned in place; no glitch on switch.
+  private padOscs: OscillatorNode[] = [];
+  private padFilter: BiquadFilterNode | null = null;
+  private padLfoGain: GainNode | null = null;
+
+  setMood(profile: PadProfile) {
+    if (!this.ctx || this.padOscs.length === 0 || !this.padFilter) return;
+    const t = this.ctx.currentTime;
+    const ramp = 1.4;
+    profile.freqs.forEach((f, i) => {
+      const o = this.padOscs[i];
+      if (!o) return;
+      o.frequency.cancelScheduledValues(t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(20, f), t + ramp);
+      const detune = (i - 2) * (profile.detuneCents ?? 7);
+      o.detune.cancelScheduledValues(t);
+      o.detune.linearRampToValueAtTime(detune, t + ramp);
+    });
+    this.padFilter.frequency.cancelScheduledValues(t);
+    this.padFilter.frequency.linearRampToValueAtTime(profile.cutoff, t + ramp);
+    this.padFilter.Q.linearRampToValueAtTime(profile.q ?? 0.7, t + ramp);
+    if (this.padLfoGain) {
+      this.padLfoGain.gain.linearRampToValueAtTime(
+        profile.lfoDepth ?? 220,
+        t + ramp,
+      );
+    }
+  }
+
+  // Procedural ambient pad. Five detuned oscillators in a minor 9th-ish
+  // voicing, slow LFO on filter cutoff. Profile is mutable via setMood().
+  startPad(profile: PadProfile = PROFILES.cursedKnob) {
     if (this.padStarted || !this.ctx || !this.master) return;
     this.padStarted = true;
     const ctx = this.ctx;
     const dest = this.master;
 
-    // rooted at A2
-    const fundamentals = [55, 82.41, 130.81, 164.81, 196]; // A1, E2, C3, E3, G3
     const oscs: OscillatorNode[] = [];
-    const gains: GainNode[] = [];
     const filt = ctx.createBiquadFilter();
     filt.type = "lowpass";
-    filt.frequency.value = 600;
-    filt.Q.value = 0.7;
+    filt.frequency.value = profile.cutoff;
+    filt.Q.value = profile.q ?? 0.7;
 
     const lfo = ctx.createOscillator();
     const lfoGain = ctx.createGain();
     lfo.frequency.value = 0.07;
-    lfoGain.gain.value = 220;
+    lfoGain.gain.value = profile.lfoDepth ?? 220;
     lfo.connect(lfoGain);
     lfoGain.connect(filt.frequency);
     lfo.start();
@@ -192,22 +219,25 @@ class AudioEngineImpl {
     padGain.gain.value = 0;
     padGain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 4);
 
-    fundamentals.forEach((f, i) => {
+    profile.freqs.forEach((f, i) => {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = i % 2 ? "triangle" : "sawtooth";
       o.frequency.value = f;
-      o.detune.value = (i - 2) * 7;
+      o.detune.value = (i - 2) * (profile.detuneCents ?? 7);
       g.gain.value = 0.08 + (i === 0 ? 0.12 : 0);
       o.connect(g);
       g.connect(filt);
       o.start();
       oscs.push(o);
-      gains.push(g);
     });
 
     filt.connect(padGain);
     padGain.connect(dest);
+
+    this.padOscs = oscs;
+    this.padFilter = filt;
+    this.padLfoGain = lfoGain;
 
     this.padNodes = {
       stop: () => {
@@ -224,6 +254,44 @@ class AudioEngineImpl {
     this.padNodes?.stop();
     this.padNodes = null;
     this.padStarted = false;
+    this.padOscs = [];
+    this.padFilter = null;
+    this.padLfoGain = null;
+  }
+}
+
+export type PadProfile = {
+  freqs: number[];          // 5 fundamentals
+  cutoff: number;           // filter cutoff in Hz
+  q?: number;               // filter resonance
+  detuneCents?: number;     // detune step between oscs
+  lfoDepth?: number;        // LFO sweep depth on cutoff
+};
+
+// Per-scene mood profiles. Five oscillators each. Tuned by ear, not theory —
+// theory was tried and rejected for being insufficiently weird.
+export const PROFILES: Record<string, PadProfile> = {
+  cursedKnob:    { freqs: [55, 82.41, 130.81, 164.81, 196],   cutoff: 600,  lfoDepth: 220 },
+  cosmicOrbit:   { freqs: [65.41, 98, 130.81, 196, 261.63],   cutoff: 1100, lfoDepth: 320, detuneCents: 4 },
+  medievalLever: { freqs: [41.2, 49, 61.74, 73.42, 92.5],     cutoff: 380,  q: 1.4, lfoDepth: 80 },
+  liquidReactor: { freqs: [82.41, 103.83, 130.81, 164.81, 207.65], cutoff: 720, lfoDepth: 460 },
+  bossBattle:    { freqs: [55, 73.42, 92.5, 116.54, 146.83],  cutoff: 460, q: 1.6, detuneCents: 14 },
+  screamCalibrator: { freqs: [110, 164.81, 220, 277.18, 329.63], cutoff: 1400, lfoDepth: 220 },
+  blackHole:     { freqs: [27.5, 41.2, 55, 65.41, 82.41],     cutoff: 320, q: 1.2, lfoDepth: 60 },
+  forbiddenButton: { freqs: [82.41, 110, 146.83, 196, 261.63], cutoff: 540, q: 1.1, lfoDepth: 180, detuneCents: 18 },
+};
+
+export function profileForScene(scene: string): PadProfile {
+  switch (scene) {
+    case "cursed-knob": return PROFILES.cursedKnob;
+    case "cosmic-orbit": return PROFILES.cosmicOrbit;
+    case "medieval-lever": return PROFILES.medievalLever;
+    case "liquid-reactor": return PROFILES.liquidReactor;
+    case "boss-battle": return PROFILES.bossBattle;
+    case "scream-calibrator": return PROFILES.screamCalibrator;
+    case "black-hole": return PROFILES.blackHole;
+    case "forbidden-button": return PROFILES.forbiddenButton;
+    default: return PROFILES.cursedKnob;
   }
 }
 
