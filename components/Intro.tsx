@@ -7,7 +7,6 @@ import { useSceneStore } from "@/lib/state/use-scene-store";
 import { getAudioEngine } from "@/lib/audio/audio-engine";
 import { play } from "@/lib/audio/presets";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
-import { SystemReadout } from "./chrome/SystemReadout";
 
 const TITLE = "YOU HAVE FOUND THE LOUDEST PLACE ON THE INTERNET.";
 const SUBTITLE = "VOLUMETRIC HUBRIS // v4.7.0 // CALIBRATING REALITY...";
@@ -257,8 +256,11 @@ export function Intro() {
 
           {/* system readout */}
           {(phase === "system" || phase === "whisper") && (
-            <div className="absolute left-6 bottom-6 max-w-[60ch] hud">
-              <SystemReadout active />
+            <div className="absolute left-6 bottom-6 max-w-[60ch] hud text-bone/40 text-[10px] leading-relaxed">
+              <div>BHAI BHAI ENTERPRISES PVT. LTD. // SOLAR SYSTEM OPERATIONS</div>
+              <div>DESIGNATION: SENIOR VOLUME MANAGER (PROBATION: 3 MONTHS)</div>
+              <div>REPORTING TO: SHARMA SIR (BP: 120/80, STATUS: WATCHING)</div>
+              <div>CEO: BHAI (DUBAI, UNREACHABLE) // HR: SUMAN AUNTY 🌹</div>
             </div>
           )}
 
